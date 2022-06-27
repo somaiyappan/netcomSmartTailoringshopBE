@@ -97,6 +97,7 @@ let userCreationalfun = async (req, res) => {
   }
 };
 
+
 let rateSalwarInitial = async (req, res) => {
   let salwarData = [{
     dateTime: cdate, salwarId: "sal" + generateUniqueId({ length: 4, useLetters: false }), salwarCost:
@@ -371,22 +372,33 @@ router.post("/allCustomerData", async (req, res) => {
   }
 });
 
+
+let mongoDBConnect=async(username)=>
+{
+  mongoose.disconnect()
+
+  let dbName = username.split('@')[0] + 'SmartTailorShopDB'
+
+  let mongoURL = 'mongodb://localhost/' + dbName
+
+  const db = await mongoose.connect(mongoURL)
+
+}
+
+
 router.post("/getAllCustomerData", async (req, res) => {
   console.log("getAllCustomerData");
 
 
 
-  mongoose.disconnect()
+  
   try {
 
+    await mongoDBConnect(req.body.username)
 
 
 
-    let dbName = req.body.username.split('@')[0] + 'SmartTailorShopDB'
-
-    let mongoURL = 'mongodb://localhost/' + dbName
-
-    const db = await mongoose.connect(mongoURL)
+ 
     var pageNo = req.body.page;
     let size = req.body.size;
 
@@ -690,13 +702,7 @@ router.post("/updateVerify", async (req, res) => {
 router.post("/getCustomerData", async (req, res) => {
   console.log("getCustomerData");
   var user = req.body.user;
-  mongoose.disconnect()
-
-  let dbName = req.body.username.split('@')[0] + 'SmartTailorShopDB'
-
-  let mongoURL = 'mongodb://localhost/' + dbName
-
-  const db = await mongoose.connect(mongoURL)
+  await mongoDBConnect(req.body.username)
   try {
     var results = await CustomerSchema.findOne(
       { cusMobNo: req.body.cusMobNo },
@@ -902,13 +908,7 @@ router.post("/dashBoard", async (req, res) => {
 
   try {
 
-    mongoose.disconnect()
-
-    let dbName = req.body.username.split('@')[0] + 'SmartTailorShopDB'
-
-    let mongoURL = 'mongodb://localhost/' + dbName
-
-    const db = await mongoose.connect(mongoURL)
+    await mongoDBConnect(req.body.username)
 
 
     let customerCount = await CustomerSchema.find({});
@@ -1793,13 +1793,7 @@ router.post("/addCustomerData", async (req, res) => {
 
 
   try {
-    mongoose.disconnect()
-
-    let dbName = req.body.username.split('@')[0] + 'SmartTailorShopDB'
-
-    let mongoURL = 'mongodb://localhost/' + dbName
-
-    const db = await mongoose.connect(mongoURL)
+    await mongoDBConnect(req.body.username)
 
 
     let reqData = req.body
@@ -1976,13 +1970,7 @@ router.post("/fromtodate", async (req, res) => {
 
 router.post("/deleteCustomerData", async (req, res) => {
   console.log("deleteCustomerData");
-  mongoose.disconnect()
-
-  let dbName = req.body.username.split('@')[0] + 'SmartTailorShopDB'
-
-  let mongoURL = 'mongodb://localhost/' + dbName
-
-  const db = await mongoose.connect(mongoURL)
+  await mongoDBConnect(req.body.username)
   
   var mobileNo = req.body.cusMobNo;
   var orderIdLength;
