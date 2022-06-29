@@ -1,11 +1,8 @@
-// const express = require("express");
-// const mongoose = require('mongoose');
-
 import express from "express"
-import mongoose from "mongoose"
 import cors from "cors"
 import cluster from 'cluster'
 import os from 'os'
+
 
 import router from './router.js'
 import registrationRouter from './registrationRouter.js'
@@ -16,6 +13,7 @@ import orderDetailsAPI from './CODRR/orderDetailsAPI.js'
 import dashboardAPI from './CODRR/dashBoardAPI.js'
 import reportAPI from './CODRR/reportAPI.js'
 import rateUpdaterAPI from './CODRR/rateUpdaterAPI.js'
+import employeeDetailsAPI from "./CODRR/employeeDetails.js"
 
 
 const app = express();
@@ -23,6 +21,9 @@ const app = express();
 app.use(cors())
 
 const port = 3002
+
+
+
 
 
 //body-parser
@@ -42,6 +43,8 @@ app.use('/orderProcess' ,orderDetailsAPI)
 app.use('/dashboardProcess' ,dashboardAPI)
 app.use('/reportProcess' ,reportAPI)
 app.use('/rateProcess' ,rateUpdaterAPI)
+app.use('/employeeProcess' ,employeeDetailsAPI)
+
 
 
 

@@ -9,16 +9,13 @@ const secretAccessKey = process.env.AWS_SECRET_KEY;
 
 const s3 = new AWS.S3({ region, accessKeyId, secretAccessKey });
 
-function uploadFileToS3(base64Image, id) {
-  var buf = Buffer.from(
-    base64Image.replace(/^data:image\/\w+;base64,/, ""),
-    "base64"
-  );
+function uploadFileToS3(dbName,base64Image, id) {
+  var buf = Buffer.from( base64Image.replace(/^data:image\/\w+;base64,/, ""), "base64" );
 
   var dirName = id.split("-")[0];
 
   var data = {
-    Key: dirName + "/" + id,
+    Key: dbName+"/"+dirName + "/" + id,
     Body: buf,
     ContentEncoding: "base64",
     ContentType: "image/jpeg",

@@ -8,10 +8,14 @@ const registerSchema = new mongoose.Schema({
     mobNo:String,
     password:String,
     shopName:String,
+    shopMobNo:String,
     shopAddress:String,
     color:String,
     dbName:String,
-    planExpiryDate:Date
+    planExpiryDate:Date,
+    suspendUser:Boolean,
+    customerMaxCount:Number,
+    orderMaxCount:Number
 });
 const registrationDetails = mongoose.model("registrationDetails", registerSchema);
 

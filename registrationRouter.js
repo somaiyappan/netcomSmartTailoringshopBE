@@ -61,17 +61,21 @@ let rateBlouseInitial = async (req, res) => {
                 Basic: 500,
                 "With Lining": 150,
                 "Without Lining": 0,
-                Rope: 30,
-                Zip: 75,
+                "Rope": 30,
+                "Zip": 75,
+                "Saree Falls": 50,
+                "Tazzles":75,
                 "Piping - Neck": 250,
                 "Piping - Neck Sleeve": 350,
                 "Double Piping - Neck Sleeve": 450,
                 "Trible Piping - Neck Sleeve": 550,
                 "Straight Cut": 0,
                 "Cross Cut": 0,
+                "Princess Cut": 290,
                 "Katori Cut": 290,
-                "Boat Neck": 290,
-                "Princess Neck": 290,
+                "Boat - Neck": 100,
+                "Collar - Neck":100,
+                
             },
         },
     ];
@@ -231,6 +235,12 @@ router.post('/register', async (req, res) => {
         requestData['dbName'] = dbName
         requestData['color'] = randomColor({ luminosity: 'dark', hue: 'random' })
         requestData['planExpiryDate'] = planExpiryDate
+        requestData['suspendUser'] = false
+        requestData['customerMaxCount'] = 50
+        requestData['orderMaxCount'] = 50
+
+
+
 
         let obj = await createCustomDB(dbName, requestData)
         console.log(obj);

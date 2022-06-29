@@ -1,9 +1,12 @@
+
 import express from "express";
 import mongoose from "mongoose"
 import generateUniqueId from "generate-unique-id";
 import randomColor from "randomcolor";
 
 import CustomerSchema from "../schema/CustomerSchema.js";
+import EmployeeSchema from "../schema/employeeAddSchema.js";
+
 import addOrderSchema from "../schema/addOrderSchema.js";
 import mongoDBConnect from "../commonJSFile/mongoDBConnect.js"
 import personNames from "../commonJSFile/personNames.js";
@@ -30,11 +33,11 @@ var myDate = new Date("2022-03-12");
 
 
 
-router.post("/addCustomerData", async (req, res) => {
+router.post("/addEmployeeData", async (req, res) => {
 
-  console.log("addCustomerData");
+  console.log("addEmployeeData");
 
-  
+ 
       try {
         let tokenData = jwtTokenVerifyFile(req.headers.authorization);
 
@@ -45,25 +48,22 @@ router.post("/addCustomerData", async (req, res) => {
           console.log("TOken verifed Success")
           try {
             await mongoDBConnect(req.body.username)
+
+            var ShopName = req.body.username
+            var firstThreeLetterShopName= ShopName.slice(0, 3).toUpperCase()
             let reqData = req.body
             console.log(reqData)
-            const id = generateUniqueId({
-              length: 5,
-              useLetters: false,
-            });
-            var custId = "cus-" + id;
-            const color = randomColor({
-              luminosity: "bright",
-              format: "rgb",
-            });
+            const id = generateUniqueId({ length: 4, useLetters: false, });
+            var employeeId = firstThreeLetterShopName+"-"+"EMP-" + id;
+            const color = randomColor({ luminosity: "bright", format: "rgb", });
             let currentdate = new Date().toISOString();
-            const postPerson = await new CustomerSchema({ cusDate: currentdate, cusName: req.body.cusName, cusEmail: req.body.cusEmail, cusMobNo: req.body.cusMobNo, cusAddress: req.body.cusAddress, cusId: custId, cusColor: color, });
+            const employeeAdd = await new EmployeeSchema({ empId: employeeId, empDate: currentdate, empName: req.body.empName,  empMobNo: req.body.empMobNo,empEmail: req.body.empEmail, empSalary:req.body.empSalary, empAddress: req.body.empAddress, cusColor: color, });
             try {
-              var results = await CustomerSchema.find({ cusMobNo: req.body.cusMobNo })
+              var results = await EmployeeSchema.find({ empMobNo: req.body.empMobNo })
               if (results.length != 0) {
                 return res.json({ success: "false", message: "UserExists" });
               } else {
-                const savePersons = postPerson.save();
+                employeeAdd.save();
                 return res.json({ success: "true", message: "RegistrationSuccess" });
               }
             } catch (e) {
@@ -71,7 +71,7 @@ router.post("/addCustomerData", async (req, res) => {
               return res.json({ 'success': false, message: 'Server Down' })
             }
           } catch (error) {
-            console.log("addCustomerDataCatcherror")
+            console.log("addEmployeeDataCatcherror")
             return res.json({ 'success': false, message: error })
           }
         }
@@ -83,8 +83,123 @@ router.post("/addCustomerData", async (req, res) => {
         return res.json({ success: false, message: "Catch Error" });
       }
 
+    
   
+
 });
+
+router.post("/getAllEmployeeData", async (req, res) => {
+    console.log("getAllEmployeeData");
+  
+    try {
+      let tokenData = jwtTokenVerifyFile(req.headers.authorization);
+  
+      if (tokenData === "") {
+        return res.json({ success: false, message: "Invalid Token" });
+      }
+      else {
+  
+        console.log("TOken verifed Success")
+        try {
+  
+          await mongoDBConnect(req.body.username)
+  
+          var pageNo = req.body.page;
+          let size = req.body.size;
+  
+          var result2 = 0;
+          for (let i = 1; i <= pageNo; i++) {
+            result2 = i * size;
+          }
+          var totalEmployeeCount = await EmployeeSchema.count();
+  
+          var skips = totalEmployeeCount - result2;
+  
+          if (skips <= 0) {
+            size = size + skips;
+            skips = 0;
+          }
+  
+          var results = []
+  
+          if (req.body.searchQuery === "") {
+            results = await EmployeeSchema.find({}, { _id: 0, __v: 0 }).limit(size).skip(skips).lean();
+          }
+          else if (req.body.searchQuery !== "") {
+  
+            var fieldName = req.body.field
+            var searchValue = '\\b' + req.body.searchQuery + '[a-zA-Z0-9]*'
+  
+  
+            if (pageNo > 1) {
+              var newSkips = 0;
+              newSkips = ((pageNo) - 1) * size
+              results = await EmployeeSchema.find({ [fieldName]: { $regex: searchValue, $options: "i" } }).limit(size).skip(newSkips).lean()
+            }
+            else {
+              results = await EmployeeSchema.find({ [fieldName]: { $regex: searchValue, $options: "i" } }).limit(size).lean()
+            }
+  
+  
+            totalEmployeeCount = (await EmployeeSchema.find({ [fieldName]: { $regex: searchValue, $options: "i" } }).lean()).length
+  
+          }
+          return res.json({ success: true, message: results, totalEmployeeCount });
+  
+  
+         
+        } catch (e) {
+          console.log("getAllEmployeeDataCatchError" + e);
+          return res.json({ success: "catchfalse", message: e });
+        }
+  
+  
+      }
+  
+    } catch (error) {
+      console.log(error + "catchToken")
+      return res.json({ success: false, message: "Catch Error" });
+    }
+  
+  
+  
+  });
+
+  router.post("/allEmployeeData", async (req, res) => {
+    console.log("allEmployeeData");
+  
+    try {
+      let tokenData = jwtTokenVerifyFile(req.headers.authorization);
+  
+      if (tokenData === "") {
+        return res.json({ success: false, message: "Invalid Token" });
+      }
+      else {
+  
+        console.log("TOken verifed Success")
+        try {
+          await mongoDBConnect(req.body.username)
+  
+          var results = await EmployeeSchema.find({}, { _id: 0, __v: 0 }).lean();
+          return res.json({ success: true, message: results });
+  
+  
+        
+        } catch (e) {
+          console.log("allEmployeeDataCatchError")
+          return res.json({ success: false, message: e });
+        }
+  
+  
+      }
+  
+    } catch (error) {
+      console.log(error + "catchToken")
+      return res.json({ success: false, message: "Catch Error" });
+    }
+  
+  
+  });
 
 router.post("/getCustomerData", async (req, res) => {
   console.log("getCustomerData");
@@ -128,226 +243,9 @@ router.post("/getCustomerData", async (req, res) => {
 
 });
 
-router.post("/allCustomerData", async (req, res) => {
-  console.log("allCustomerData");
-
-  try {
-    let tokenData = jwtTokenVerifyFile(req.headers.authorization);
-
-    if (tokenData === "") {
-      return res.json({ success: false, message: "Invalid Token" });
-    }
-    else {
-
-      console.log("TOken verifed Success")
-      try {
-        await mongoDBConnect(req.body.username)
-
-        var results = await CustomerSchema.find({}, { _id: 0, __v: 0 }).lean();
-
-        if (results.length != 0) {
-          var temp = {};
-          var tempArr = [];
-          for (let i in results) {
-            let mobNo = results[i]["cusMobNo"];
-            let orderDataforNo = await addOrderSchema.find({ mobNo: mobNo }, { blouseData: 0, salwarData: 0, _id: 0, __v: 0 }).lean();
-            if (orderDataforNo.length != 0) {
-              for (let j in orderDataforNo) {
-                var salwarCountNo = orderDataforNo[j].salwarCount;
-                var blouseCountNo = orderDataforNo[j].blouseCount;
-                var finalAmount = orderDataforNo[j].finalAmount;
-                temp["cusMobNo"] = mobNo;
-                temp["salwarCount"] = salwarCountNo;
-                temp["blouseCount"] = blouseCountNo;
-                temp["finalAmount"] = finalAmount;
-                tempArr.push(temp);
-                temp = {};
-              }
-            }
-          }
-          let obj = {};
-          tempArr.forEach((item) => {
-            if (obj[item.cusMobNo]) {
-              obj[item.cusMobNo].salwarCount =
-                obj[item.cusMobNo].salwarCount + item.salwarCount;
-              obj[item.cusMobNo].blouseCount =
-                obj[item.cusMobNo].blouseCount + item.blouseCount;
-              obj[item.cusMobNo].finalAmount =
-                obj[item.cusMobNo].finalAmount + item.finalAmount;
-            } else {
-              obj[item.cusMobNo] = item;
-            }
-          });
-          let valuesArr = Object.values(obj);
-
-          let merge = results.map((t1) => ({
-            ...t1,
-            ...valuesArr.find((t2) => t2.cusMobNo === t1.cusMobNo),
-          }));
-          const addSBF = merge.map((v) => ({
-            ...v,
-            salwarCount: 0,
-            blouseCount: 0,
-            finalAmount: 0,
-          }));
-          let merge1 = addSBF.map((t1) => ({
-            ...t1,
-            ...valuesArr.find((t2) => t2.cusMobNo === t1.cusMobNo),
-          }));
-
-          var wantKeys = ["cusId", "cusName", "cusMobNo", "finalAmount"];
-
-          var result = merge1.map((obj) => Object.fromEntries(wantKeys.map((key) => obj.hasOwnProperty(key) && [key, obj[key]])));
-
-          var top10 = result.sort(function (a, b) { return a.finalAmount < b.finalAmount ? 1 : -1; }).slice(0, 10);
-
-          return res.json({ success: true, message: merge1, top10Customer: top10, });
-        } else {
-          return res.json({ success: "false", message: [] });
-        }
-      } catch (e) {
-        console.log("allCustomerDataCatchError")
-        return res.json({ success: false, message: e });
-      }
-
-
-    }
-
-  } catch (error) {
-    console.log(error + "catchToken")
-    return res.json({ success: false, message: "Catch Error" });
-  }
-
-
-});
-
-router.post("/getAllCustomerData", async (req, res) => {
-  console.log("getAllCustomerData");
-
-  try {
-    let tokenData = jwtTokenVerifyFile(req.headers.authorization);
-
-    if (tokenData === "") {
-      return res.json({ success: false, message: "Invalid Token" });
-    }
-    else {
-
-      console.log("TOken verifed Success")
-      try {
-
-        await mongoDBConnect(req.body.username)
-
-        var pageNo = req.body.page;
-        let size = req.body.size;
-
-        var result2 = 0;
-        for (let i = 1; i <= pageNo; i++) {
-          result2 = i * size;
-        }
-        var totalCustomerCount = await CustomerSchema.count();
-
-        var skips = totalCustomerCount - result2;
-
-        if (skips <= 0) {
-          size = size + skips;
-          skips = 0;
-        }
-
-        var results = []
-
-        if (req.body.searchQuery === "") {
-          results = await CustomerSchema.find({}, { _id: 0, __v: 0 }).limit(size).skip(skips).lean();
-        }
-        else if (req.body.searchQuery !== "") {
-
-          var fieldName = req.body.field
-          var searchValue = '\\b' + req.body.searchQuery + '[a-zA-Z0-9]*'
-
-
-          if (pageNo > 1) {
-            var newSkips = 0;
-            newSkips = ((pageNo) - 1) * size
-            results = await CustomerSchema.find({ [fieldName]: { $regex: searchValue, $options: "i" } }).limit(size).skip(newSkips).lean()
-          }
-          else {
-            results = await CustomerSchema.find({ [fieldName]: { $regex: searchValue, $options: "i" } }).limit(size).lean()
-          }
-
-
-          totalCustomerCount = (await CustomerSchema.find({ [fieldName]: { $regex: searchValue, $options: "i" } }).lean()).length
-
-        }
-
-
-        if (results.length != 0) {
-          var temp = {};
-          var tempArr = [];
-          for (let i in results) {
-            let mobNo = results[i]["cusMobNo"];
-            let orderDataforNo = await addOrderSchema.find({ mobNo: mobNo }, { blouseData: 0, salwarData: 0, _id: 0, __v: 0 }).lean();
-            if (orderDataforNo.length != 0) {
-
-              for (let j in orderDataforNo) {
-                var salwarCountNo = orderDataforNo[j].salwarCount;
-                var blouseCountNo = orderDataforNo[j].blouseCount;
-                var finalAmount = orderDataforNo[j].finalAmount;
-                temp["cusMobNo"] = mobNo;
-                temp["salwarCount"] = salwarCountNo;
-                temp["blouseCount"] = blouseCountNo;
-                temp["finalAmount"] = finalAmount;
-                tempArr.push(temp);
-                temp = {};
-              }
-            }
-          }
-          let obj = {};
-          tempArr.forEach((item) => {
-            if (obj[item.cusMobNo]) {
-              obj[item.cusMobNo].salwarCount =
-                obj[item.cusMobNo].salwarCount + item.salwarCount;
-              obj[item.cusMobNo].blouseCount =
-                obj[item.cusMobNo].blouseCount + item.blouseCount;
-              obj[item.cusMobNo].finalAmount =
-                obj[item.cusMobNo].finalAmount + item.finalAmount;
-            } else {
-              obj[item.cusMobNo] = item;
-            }
-          });
-          let valuesArr = Object.values(obj);
-          let merge = results.map((t1) => ({ ...t1, ...valuesArr.find((t2) => t2.cusMobNo === t1.cusMobNo), }));
-          const addSBF = merge.map((v) => ({ ...v, salwarCount: 0, blouseCount: 0, finalAmount: 0, }));
-          let merge1 = addSBF.map((t1) => ({ ...t1, ...valuesArr.find((t2) => t2.cusMobNo === t1.cusMobNo), }));
-
-          var wantKeys = ["cusId", "cusName", "cusMobNo", "finalAmount"];
-
-          var result = merge1.map((obj) =>
-            Object.fromEntries(
-              wantKeys.map((key) => obj.hasOwnProperty(key) && [key, obj[key]])
-            )
-          );
-
-          var top10 = result.sort(function (a, b) { return a.finalAmount < b.finalAmount ? 1 : -1; }).slice(0, 10);
-
-          return res.json({ success: true, message: merge1, top10Customer: top10, totalCustomerCount: totalCustomerCount, });
-        } else {
-          return res.json({ success: "false", message: [] });
-        }
-      } catch (e) {
-        console.log("getAllCustomerDataCatchError");
-        return res.json({ success: "catchfalse", message: e });
-      }
-
-
-    }
-
-  } catch (error) {
-    console.log(error + "catchToken")
-    return res.json({ success: false, message: "Catch Error" });
-  }
 
 
 
-});
 
 // router.post("/updateCustomerData", async (req, res) => {
 //   console.log("updateCustomerData");
