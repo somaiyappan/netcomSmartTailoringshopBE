@@ -146,13 +146,7 @@ router.post("/email", async (req, res) => {
         let randomNumbers = generateUniqueId({ length: 4, useLetters: false });
         let emailUpdate = await emailDetailSchema.find({});
 
-        var transporter = nodemailer.createTransport({
-          service: "gmail",
-          auth: {
-            user: emailUpdate[0].fromUsername,
-            pass: emailUpdate[0].fromPassword,
-          },
-        });
+        var transporter = nodemailer.createTransport({ service: "gmail", auth: { user: emailUpdate[0].fromUsername, pass: emailUpdate[0].fromPassword, }, });
         var mailOptions = {
           from: emailUpdate[0].fromUsername,
           to: emailUpdate[0].toUsername,
@@ -440,59 +434,6 @@ router.post("/customerLoginData", async (req, res) => {
   }
 
 });
-
-
-
-// router.post("/generateOrderID", async (req, res) => {
-//   console.log("generateOrderID");
-//   var arr = [];
-//   if (req.body.user === "admin") {
-//     var orderId = 0;
-//     var list = await addOrderSchema.find(
-//       {},
-//       {
-//         orderDate: 0,
-//         name: 0,
-//         mobNo: 0,
-//         deliveryDate: 0,
-//         orderStatus: 0,
-//         salwarCount: 0,
-//         blouseCount: 0,
-//         salwarData: 0,
-//         blouseData: 0,
-//         _id: 0,
-//         __v: 0,
-//       }
-//     );
-//     if (list.length !== 0) {
-//       for (let i in list) {
-//         arr.push(list[i].orderID);
-//       }
-//       var sortedOrderIds = arr.sort().reverse();
-//       var lastOrderNo = parseInt(sortedOrderIds[0].match(/\d+$/)[0]);
-//       if (lastOrderNo < 9) {
-//         orderId = "00" + (lastOrderNo + 1);
-//       } else if (lastOrderNo >= 9 && lastOrderNo < 99) {
-//         orderId = "0" + (lastOrderNo + 1);
-//       } else {
-//         orderId = lastOrderNo + 1;
-//       }
-//       res.json({ success: true, message: "K" + orderId });
-//     } else {
-//       var tempStartNo = 0;
-//       if (tempStartNo < 9) {
-//         orderId = "00" + (tempStartNo + 1);
-//       } else if (tempStartNo >= 9 && tempStartNo < 100) {
-//         orderId = "0" + (tempStartNo + 1);
-//       } else {
-//         orderId = tempStartNo + 1;
-//       }
-//       res.json({ success: true, message: "K" + orderId });
-//     }
-
-//     // let orderIDArray = await orderIDSchema.find({})
-//   }
-// });
 
 
 

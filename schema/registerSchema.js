@@ -14,8 +14,10 @@ const registerSchema = new mongoose.Schema({
     dbName:String,
     planExpiryDate:Date,
     suspendUser:Boolean,
-    customerMaxCount:Number,
-    orderMaxCount:Number
+    maxCustomerCount:Number,
+    maxOrderCount:Number,
+    maxEmployeeCount:Number,
+    plan:String
 });
 const registrationDetails = mongoose.model("registrationDetails", registerSchema);
 

@@ -8,7 +8,9 @@ const employeeDetailsSchema = new mongoose.Schema({
     empSalary: String,
     empAddress: String,
     empId: String,
-    empColor: String
+    empColor: String,
+    empCompanyMail:String,
+    empSuspend:Boolean
 });
 const employeeDetails = mongoose.model("employeeDetails", employeeDetailsSchema);
 

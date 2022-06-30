@@ -148,9 +148,12 @@ let email = async (req, res) => {
 router.post('/login', async (req, res) => {
     console.log("login")
     var requestData = req.body
+
     let dbName = requestData.username.split('@')[0] + 'SmartTailorShopDB'
+
     try {
         mongoose.disconnect()
+        
 
         var isExists = false
         let mongoURL = 'mongodb://localhost/' + dbName
@@ -178,10 +181,13 @@ router.post('/login', async (req, res) => {
                     const myArray1 = expiryDate.split("T");
                     let planExpiryDate = myArray1[0]
 
+                    let suspendUser=foundData[0].suspendUser
                   
                     if (foundData.length === 1) {
 
-                        if (planExpiryDate >= currentDate) {
+                        if (planExpiryDate >= currentDate && suspendUser===false ) {
+
+                            console.log("expiry")
 
                             let token = jwt.sign({ userData: foundData[0] }, TOKEN_KEY, { expiresIn: '2h' })
 
@@ -236,8 +242,10 @@ router.post('/register', async (req, res) => {
         requestData['color'] = randomColor({ luminosity: 'dark', hue: 'random' })
         requestData['planExpiryDate'] = planExpiryDate
         requestData['suspendUser'] = false
-        requestData['customerMaxCount'] = 50
-        requestData['orderMaxCount'] = 50
+        requestData['maxCustomerCount'] = 50
+        requestData['maxOrderCount'] = 50
+        requestData['maxEmployeeCount'] = 5
+        requestData['plan']="free"
 
 
 
