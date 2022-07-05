@@ -385,4 +385,50 @@ router.post("/updateEmployeeData", async (req, res) => {
   }
 });
 
+
+router.post("/employeeLogin", async (req, res) => {
+
+  try {
+    let tokenData = jwtTokenVerifyFile(req.headers.authorization);
+
+    if (tokenData === "") {
+      return res.json({ success: false, message: "Invalid Token" });
+    }
+    else {
+
+      console.log("TOken verifed Success")
+      try {
+        var email =req.body.email
+        var emailCom=email.split("@")[1]
+       
+        var dbName = emailCom.replace(/.com/g, "")
+        
+        await mongoDBConnect(dbName)
+
+        var foundUser = await EmployeeSchema.findOne({ empCompanyMail: email });
+
+        return res.json({ sucess: true, message: foundUser })
+
+
+
+
+       
+
+       
+
+       
+      } catch (error) {
+        console.log("updateCustomerDataCatchError" + error)
+        return res.json({ success: true, message: error });
+      }
+    }
+  } catch (error) {
+    console.log(error + "catchToken")
+    return res.json({ success: false, message: "Catch Error" });
+  }
+
+
+});
+
+
 export default router

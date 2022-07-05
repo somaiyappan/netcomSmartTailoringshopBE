@@ -11,6 +11,8 @@ import mongoose from "mongoose"
 import randomColor from "randomcolor";
 
 import registerSchema from "./schema/registerSchema.js";
+import EmployeeSchema from "./schema/employeeAddSchema.js";
+
 
 import jwt from 'jsonwebtoken'
 
@@ -64,7 +66,7 @@ let rateBlouseInitial = async (req, res) => {
                 "Rope": 30,
                 "Zip": 75,
                 "Saree Falls": 50,
-                "Tazzles":75,
+                "Tazzles": 75,
                 "Piping - Neck": 250,
                 "Piping - Neck Sleeve": 350,
                 "Double Piping - Neck Sleeve": 450,
@@ -74,8 +76,8 @@ let rateBlouseInitial = async (req, res) => {
                 "Princess Cut": 290,
                 "Katori Cut": 290,
                 "Boat - Neck": 100,
-                "Collar - Neck":100,
-                
+                "Collar - Neck": 100,
+
             },
         },
     ];
@@ -130,7 +132,7 @@ let email = async (req, res) => {
     if (findEmail.length === 0) {
         let getpassword = await emailDetailSchema.find({});
 
-        console.log(getpassword);
+        
         let emailDetails = await emailDetailSchema.insertMany({
             fromUsername: "netcom.steven@gmail.com",
             fromPassword: "Netcom123",
@@ -139,83 +141,194 @@ let email = async (req, res) => {
     } else {
         let getpassword = await emailDetailSchema.find({});
 
-        console.log(getpassword[0].fromPassword);
+        
         return;
     }
 };
 
 
 router.post('/login', async (req, res) => {
-    console.log("login")
+    
     var requestData = req.body
+    
 
-    let dbName = requestData.username.split('@')[0] + 'SmartTailorShopDB'
 
-    try {
-        mongoose.disconnect()
-        
+    var emailID = requestData.username
+    var findAdmin = emailID.split("@")[1]
+    var admin = findAdmin.substring(0, 9)
+    if (admin === "gmail.com") {
 
-        var isExists = false
-        let mongoURL = 'mongodb://localhost/' + dbName
 
-        var connection = await mongoose.createConnection(mongoURL);
-       
-        const temp = await connection.on('open', function () {
-            new Admin(connection.db).listDatabases(async function (err, result) {
-                var allDatabases = result.databases.map((item, index) => { return item.name });
-                console.log('Is Includes :' + allDatabases.includes(dbName))
+        let dbName = requestData.username.split('@')[0] + 'SmartTailorShopDB'
 
-                if (allDatabases.includes(dbName)) {
-                    console.log(connection.models)
-                    connection.close()
-                    const db = await mongoose.connect(mongoURL)
-                    const filter = { "emailId": requestData.username, "password": requestData.password }
-                    const omit = { _id: 0, __v: 0 }
-                    let foundData = await registerSchema.find(filter, omit)
-                    const date = new Date().toISOString()
+        try {
+            mongoose.disconnect()
 
-                    const myArray = date.split("T");
-                    let currentDate = myArray[0]
 
-                    let expiryDate = foundData[0].planExpiryDate.toISOString()
-                    const myArray1 = expiryDate.split("T");
-                    let planExpiryDate = myArray1[0]
+            var isExists = false
+            let mongoURL = 'mongodb://localhost/' + dbName
 
-                    let suspendUser=foundData[0].suspendUser
-                  
-                    if (foundData.length === 1) {
+            var connection = await mongoose.createConnection(mongoURL);
 
-                        if (planExpiryDate >= currentDate && suspendUser===false ) {
+            const temp = await connection.on('open', function () {
+                new Admin(connection.db).listDatabases(async function (err, result) {
+                    var allDatabases = result.databases.map((item, index) => { return item.name });
+                    
 
-                            console.log("expiry")
 
-                            let token = jwt.sign({ userData: foundData[0] }, TOKEN_KEY, { expiresIn: '2h' })
+                    if (allDatabases.includes(dbName)) {
 
-                            console.log({ userData: foundData[0] })
+                        
+                        connection.close()
+                        const db = await mongoose.connect(mongoURL)
+                        const filter = { "emailId": requestData.username, "password": requestData.password }
+                        const omit = { _id: 0, __v: 0 }
+                        let foundData = await registerSchema.find(filter, omit).lean()
+                        const date = new Date().toISOString()
 
-                            return res.json({ 'success': true, message: 'Welcome', token })
+                        const myArray = date.split("T");
+                        let currentDate = myArray[0]
+
+                        let expiryDate = foundData[0].planExpiryDate.toISOString()
+                        const myArray1 = expiryDate.split("T");
+                        let planExpiryDate = myArray1[0]
+
+                        let suspendUser = foundData[0].suspendUser
+
+
+
+
+                        if (foundData.length === 1) {
+
+                            if (planExpiryDate >= currentDate && suspendUser === false) {
+
+
+
+
+                                let token = jwt.sign({ userData: { ...foundData[0], currentUser: "owner",currentUserName:foundData[0].name } }, TOKEN_KEY, { expiresIn: '2h' })
+
+
+
+                                return res.json({ 'success': true, message: 'Welcome', token })
+                            }
+                            else {
+
+                                return res.json({ 'success': false, message: 'Your Plan has been Expired. Please Contact Netcom' })
+
+                            }
                         }
                         else {
-                           
-                            return res.json({ 'success': true, message: 'plan expired' })
-
+                            return res.json({ 'success': false, message: ' Invalid Email/ Password' })
                         }
-                    }
-                    else {
+                    } else {
+
                         return res.json({ 'success': false, message: 'Invalid Email/ Password' })
                     }
-                } else {
-                    return res.json({ 'success': false, message: 'Invalid Email/ Password' })
-                }
+                });
+
             });
+            
 
-        });
-        console.log("temp")
+            return isExists
+        } catch (error) {
+            
+            return res.json({ 'success': false, message: 'Server Down' })
+        }
+    }
 
-        return isExists
-    } catch (error) {
-        console.log(error + "ddd")
-        return res.json({ 'success': false, message: 'Server Down' })
+    else {
+
+        var EmaildbName = requestData.username.split("@")[1]
+        var removeDotCom = EmaildbName.replace(/.com/g, "")
+        var dbName = removeDotCom.replace(/smarttailorshop/g, "SmartTailorShopDB")
+        try {
+            mongoose.disconnect()
+
+
+            var isExists = false
+            let mongoURL = 'mongodb://localhost/' + dbName
+
+            var connection = await mongoose.createConnection(mongoURL);
+
+            const temp = await connection.on('open', function () {
+                new Admin(connection.db).listDatabases(async function (err, result) {
+                    var allDatabases = result.databases.map((item, index) => { return item.name });
+                    
+
+
+                    if (allDatabases.includes(dbName)) {
+
+
+
+                        
+                        connection.close()
+                        const db = await mongoose.connect(mongoURL)
+
+                        let foundData = await registerSchema.find({ "dbName": dbName }).lean()
+
+                        const date = new Date().toISOString()
+
+                        const myArray = date.split("T");
+                        let currentDate = myArray[0]
+
+                        let expiryDate = foundData[0].planExpiryDate.toISOString()
+                        const myArray1 = expiryDate.split("T");
+                        let planExpiryDate = myArray1[0]
+
+                        let suspendUser = foundData[0].suspendUser
+
+
+                        const filter = { "empCompanyMail": requestData.username, "empId": requestData.password }
+                        const omit = { _id: 0, __v: 0 }
+                        let foundEmployee = await EmployeeSchema.find(filter, omit)
+                        let foundEmpName = foundEmployee[0].empName
+
+
+
+
+
+
+
+                        if (foundEmployee.length === 1) {
+
+                            if (planExpiryDate >= currentDate && suspendUser === false) {
+
+                                
+                                foundData[0]["currentUser"] = "employee"
+
+                                let token = jwt.sign({ userData: { ...foundData[0], currentUser: "employee", currentUserName: foundEmpName } }, TOKEN_KEY, { expiresIn: '2h' })
+
+                                
+
+                                return res.json({ 'success': true, message: 'Welcome', token })
+                            }
+                            else {
+
+                                return res.json({ 'success': false, message: 'Your Plan has been Expired. Please Contact Netcom' })
+
+                            }
+                        }
+                        else {
+                            return res.json({ 'success': false, message: ' Invalid Email/ Password' })
+                        }
+                    } else {
+
+                        return res.json({ 'success': false, message: 'Invalid Email/ Password' })
+                    }
+                });
+
+            });
+            
+
+            return isExists
+        } catch (error) {
+            
+            return res.json({ 'success': false, message: 'Server Down' })
+        }
+
+
+
+
     }
 
 })
@@ -245,16 +358,16 @@ router.post('/register', async (req, res) => {
         requestData['maxCustomerCount'] = 50
         requestData['maxOrderCount'] = 50
         requestData['maxEmployeeCount'] = 5
-        requestData['plan']="free"
+        requestData['plan'] = "free"
 
 
 
 
         let obj = await createCustomDB(dbName, requestData)
-        console.log(obj);
+        
         return res.json(obj)
     } catch (error) {
-        console.log(error)
+        
         return res.json({ 'success': false, message: 'Server Down' })
     }
 
@@ -268,7 +381,7 @@ async function createCustomDB(name, requestData) {
         let mongoURL = 'mongodb://localhost/' + name
         const db = await mongoose.connect(mongoURL)
         let foundLength = (await registerSchema.find({})).length
-        console.log(foundLength);
+        
         if (foundLength === 1) {
             db.disconnect()
             return { success: false, message: 'Email ID Already Exists' }
@@ -284,7 +397,7 @@ async function createCustomDB(name, requestData) {
         return { success: true, message: 'Registration Success.Enjoy Using Smart Tailor Shop :)' }
     }
     catch (error) {
-        console.log(error);
+        
         return { success: false, message: 'Server Down...' }
     }
 
