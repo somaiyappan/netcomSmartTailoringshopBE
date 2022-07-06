@@ -6,6 +6,7 @@ import os from 'os'
 
 import router from './router.js'
 import registrationRouter from './registrationRouter.js'
+import adminRouter from './adminRouter.js'
 
 
 import customerDetailsAPI from "./CODRR/customerDetailsAPI.js"
@@ -44,6 +45,7 @@ app.use('/dashboardProcess' ,dashboardAPI)
 app.use('/reportProcess' ,reportAPI)
 app.use('/rateProcess' ,rateUpdaterAPI)
 app.use('/employeeProcess' ,employeeDetailsAPI)
+app.use('./adminRouter', adminRouter)
 
 
 

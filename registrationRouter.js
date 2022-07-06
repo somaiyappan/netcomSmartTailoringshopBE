@@ -132,7 +132,7 @@ let email = async (req, res) => {
     if (findEmail.length === 0) {
         let getpassword = await emailDetailSchema.find({});
 
-        
+
         let emailDetails = await emailDetailSchema.insertMany({
             fromUsername: "netcom.steven@gmail.com",
             fromPassword: "Netcom123",
@@ -141,16 +141,16 @@ let email = async (req, res) => {
     } else {
         let getpassword = await emailDetailSchema.find({});
 
-        
+
         return;
     }
 };
 
 
 router.post('/login', async (req, res) => {
-    
+
     var requestData = req.body
-    
+
 
 
     var emailID = requestData.username
@@ -162,6 +162,7 @@ router.post('/login', async (req, res) => {
         let dbName = requestData.username.split('@')[0] + 'SmartTailorShopDB'
 
         try {
+
             mongoose.disconnect()
 
 
@@ -173,12 +174,12 @@ router.post('/login', async (req, res) => {
             const temp = await connection.on('open', function () {
                 new Admin(connection.db).listDatabases(async function (err, result) {
                     var allDatabases = result.databases.map((item, index) => { return item.name });
-                    
+
 
 
                     if (allDatabases.includes(dbName)) {
 
-                        
+
                         connection.close()
                         const db = await mongoose.connect(mongoURL)
                         const filter = { "emailId": requestData.username, "password": requestData.password }
@@ -205,7 +206,7 @@ router.post('/login', async (req, res) => {
 
 
 
-                                let token = jwt.sign({ userData: { ...foundData[0], currentUser: "owner",currentUserName:foundData[0].name } }, TOKEN_KEY, { expiresIn: '2h' })
+                                let token = jwt.sign({ userData: { ...foundData[0], currentUser: "owner", currentUserName: foundData[0].name } }, TOKEN_KEY, { expiresIn: '2h' })
 
 
 
@@ -227,11 +228,11 @@ router.post('/login', async (req, res) => {
                 });
 
             });
-            
+
 
             return isExists
         } catch (error) {
-            
+
             return res.json({ 'success': false, message: 'Server Down' })
         }
     }
@@ -253,14 +254,12 @@ router.post('/login', async (req, res) => {
             const temp = await connection.on('open', function () {
                 new Admin(connection.db).listDatabases(async function (err, result) {
                     var allDatabases = result.databases.map((item, index) => { return item.name });
-                    
+
 
 
                     if (allDatabases.includes(dbName)) {
 
 
-
-                        
                         connection.close()
                         const db = await mongoose.connect(mongoURL)
 
@@ -284,21 +283,16 @@ router.post('/login', async (req, res) => {
                         let foundEmpName = foundEmployee[0].empName
 
 
-
-
-
-
-
                         if (foundEmployee.length === 1) {
 
                             if (planExpiryDate >= currentDate && suspendUser === false) {
 
-                                
+
                                 foundData[0]["currentUser"] = "employee"
 
                                 let token = jwt.sign({ userData: { ...foundData[0], currentUser: "employee", currentUserName: foundEmpName } }, TOKEN_KEY, { expiresIn: '2h' })
 
-                                
+
 
                                 return res.json({ 'success': true, message: 'Welcome', token })
                             }
@@ -318,11 +312,11 @@ router.post('/login', async (req, res) => {
                 });
 
             });
-            
+
 
             return isExists
         } catch (error) {
-            
+
             return res.json({ 'success': false, message: 'Server Down' })
         }
 
@@ -340,34 +334,57 @@ router.post('/register', async (req, res) => {
 
     try {
         mongoose.disconnect()
-        var requestData = req.body
-        let dbName = requestData.emailId.split("@")[0] + 'SmartTailorShopDB'
-        let userID = "userID-" + generateUniqueId({ length: 8, useLetters: false })
-        let date = new Date()
 
 
-        var numberOfDaysToAdd = 10;
-        var result = date.setDate(date.getDate() + numberOfDaysToAdd);
-        const planExpiryDate = new Date(result).toISOString()
+        let mongoURL = 'mongodb://localhost/'
 
-        requestData['userID'] = userID
-        requestData['dbName'] = dbName
-        requestData['color'] = randomColor({ luminosity: 'dark', hue: 'random' })
-        requestData['planExpiryDate'] = planExpiryDate
-        requestData['suspendUser'] = false
-        requestData['maxCustomerCount'] = 50
-        requestData['maxOrderCount'] = 50
-        requestData['maxEmployeeCount'] = 5
-        requestData['plan'] = "free"
+        var connection = await mongoose.createConnection(mongoURL);
 
-
+        var allDatabases = []
+        const temp = await connection.on('open', function () {
+            new Admin(connection.db).listDatabases(async function (err, result) {
+                allDatabases = result.databases.map((item, index) => { return item.name })
+                if (allDatabases.length <= 15) {
+                    var requestData = req.body
+                    let dbName = requestData.emailId.split("@")[0] + 'SmartTailorShopDB'
+                    let userID = "userID-" + generateUniqueId({ length: 8, useLetters: false })
+                    let date = new Date()
 
 
-        let obj = await createCustomDB(dbName, requestData)
+                    var numberOfDaysToAdd = 10;
+                    var result = date.setDate(date.getDate() + numberOfDaysToAdd);
+                    const planExpiryDate = new Date(result).toISOString()
+
+                    requestData['userID'] = userID
+                    requestData['dbName'] = dbName
+                    requestData['color'] = randomColor({ luminosity: 'dark', hue: 'random' })
+                    requestData['planExpiryDate'] = planExpiryDate
+                    requestData['suspendUser'] = false
+                    requestData['maxCustomerCount'] = 50
+                    requestData['maxOrderCount'] = 50
+                    requestData['maxEmployeeCount'] = 5
+                    requestData['plan'] = "free"
+
+
+
+
+                    let obj = await createCustomDB(dbName, requestData)
+
+                    return res.json(obj)
+                }
+                else {
+                    
+                    return res.json({ 'success': false, message: 'Registration are not accepted right now. Please Contact Netcom' })
+
+                }
+
+            });
+        });
+
         
-        return res.json(obj)
+
     } catch (error) {
-        
+
         return res.json({ 'success': false, message: 'Server Down' })
     }
 
@@ -381,7 +398,7 @@ async function createCustomDB(name, requestData) {
         let mongoURL = 'mongodb://localhost/' + name
         const db = await mongoose.connect(mongoURL)
         let foundLength = (await registerSchema.find({})).length
-        
+
         if (foundLength === 1) {
             db.disconnect()
             return { success: false, message: 'Email ID Already Exists' }
@@ -397,7 +414,7 @@ async function createCustomDB(name, requestData) {
         return { success: true, message: 'Registration Success.Enjoy Using Smart Tailor Shop :)' }
     }
     catch (error) {
-        
+
         return { success: false, message: 'Server Down...' }
     }
 
