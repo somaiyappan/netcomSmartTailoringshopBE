@@ -23,6 +23,10 @@ const router = express.Router();
 
 router.use(express.json());
 
+router.get("/", (req, res) => {
+  res.json("admin router works");
+});
+
 
 let cdate = new Date();
 let currentyear = cdate.getUTCFullYear();
@@ -1375,47 +1379,6 @@ router.post("/getSalwarORBlouseId", async (req, res) => {
 
 });
 
-router.post("/getOrderId", async (req, res) => {
-  console.log("getOrderId");
-  try {
-    let tokenData = jwtTokenVerifyFile(req.headers.authorization);
-
-    if (tokenData === "") {
-      return res.json({ success: false, message: "Invalid Token" });
-    }
-    else {
-
-      console.log("TOken verifed Success")
-      try {
-        await mongoDBConnect(req.body.username)
-        var cusId = req.body.cusId;
-        var cusMobNo = req.body.cusMobNo;
-        var cusOrderId = await CustomerSchema.find({ $and: [{ cusMobNo: cusMobNo }, { cusId: cusId }], });
-        if (cusOrderId.length === 0) {
-          res.json({ success: false, message: "Customer Data Not Found" });
-        } else {
-          var customerDet = await addOrderSchema.find({ mobNo: cusMobNo }, { salwarData: 0, blouseData: 0, __v: 0, _id: 0, gst: 0, orderDate: 0, name: 0, mobNo: 0, deliveryDate: 0, orderStatus: 0, salwarCount: 0, finalAmount: 0, blouseCount: 0, });
-          var arr = [];
-          for (let i = 0; i < customerDet.length; i++) {
-            arr.push(customerDet[i]["orderID"]);
-          }
-          res.json({ success: true, message: arr });
-        }
-
-      } catch (error) {
-        console.log("getOrderIdCatchError")
-        return res.json({ success: false, message: error });
-      }
-
-    }
-
-  } catch (error) {
-    console.log(error + "catchToken")
-    return res.json({ success: false, message: "Catch Error" });
-  }
-
-
-});
 
 
 export default router

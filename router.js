@@ -10,6 +10,12 @@ import emailDetailSchema from "./schema/emailCreationalSchema.js";
 
 
 import jwtTokenVerifyFile from "./commonJSFile/jwtTokenVerify.js"
+import mongoDBConnect from "./commonJSFile/mongoDBConnect.js";
+import registerSchema from "./schema/registerSchema.js";
+
+import mongoose from "mongoose";
+
+var Admin = mongoose.mongo.Admin;
 
 
 
@@ -209,24 +215,149 @@ router.post("/getCustomerPage", async (req, res) => {
 });
 
 
-
-router.post("/customerLoginData", async (req, res) => {
-  console.log("customerLoginData");
-  try {
-    let tokenData = jwtTokenVerifyFile(req.headers.authorization);
-
-    if (tokenData === "") {
-      return res.json({ success: false, message: "Invalid Token" });
-    }
-    else {
+router.post("/getOrderId", async (req, res) => {
+  console.log("getOrderId");
+ 
 
       console.log("TOken verifed Success")
       try {
-        await mongoDBConnect(req.body.username)
+
+        mongoose.disconnect();
+
+        var allDBNames = [];
+    
+        var dataToRes = [];
+    
+        let mongoURL = "mongodb://localhost/";
+    
+        var connection = await mongoose.createConnection(mongoURL);
+    
+        const temp = await connection.on("open", function () {
+          new Admin(connection.db).listDatabases(async function (err, result) {
+            var allDatabases = result.databases.map((item, index) => {
+              return item.name;
+            });
+    
+            for (let i = 0; i < allDatabases.length; i++) {
+              if (allDatabases[i].split("SmartTailorShopDB").length === 2) {
+                allDBNames.push(allDatabases[i].split("SmartTailorShopDB")[0] + "SmartTailorShopDB");
+              }
+            }
+    
+    
+            for (let i = 0; i < allDBNames.length; i++) {
+              let url = "mongodb://localhost/" + allDBNames[i];
+              connection.close();
+              const db = await mongoose.connect(url);
+    
+              let foundData = await registerSchema.findOne({ shopCode: req.body.shopCode });
+    
+              if (foundData !== null) {
+                dataToRes.push(foundData);
+              }
+              db.disconnect();
+            }
+    
+    
+            
+    
+      
+    
+            let dbNameCrop = dataToRes[0].dbName.replace("SmartTailorShopDB", "");
+    
+            await mongoDBConnect(dbNameCrop)
+    
+          
+            
+            var cusId = req.body.cusId;
+            var cusMobNo = req.body.cusMobNo;
+            var cusOrderId = await CustomerSchema.find({ $and: [{ cusMobNo: cusMobNo }, { cusId: cusId }], });
+            if (cusOrderId.length === 0) {
+              res.json({ success: false, message: "Customer Data Not Found" });
+            } else {
+              var customerDet = await addOrderSchema.find({ mobNo: cusMobNo }, { salwarData: 0, blouseData: 0, __v: 0, _id: 0, gst: 0, orderDate: 0, name: 0, mobNo: 0, deliveryDate: 0, orderStatus: 0, salwarCount: 0, finalAmount: 0, blouseCount: 0, });
+              var arr = [];
+              for (let i = 0; i < customerDet.length; i++) {
+                arr.push(customerDet[i]["orderID"]);
+              }
+              res.json({ success: true, message: arr });
+            }
+    
+          });
+        });
+
+
+      } catch (error) {
+        console.log("getOrderIdCatchError")
+        return res.json({ success: false, message: error });
+      }
+
+});
+
+
+
+router.post("/customerLoginData", async (req, res) => {
+  console.log("customerLoginData");
+
+
+  console.log("TOken verifed Success")
+
+
+  try {
+    mongoose.disconnect();
+
+    var allDBNames = [];
+
+    var dataToRes = [];
+
+    let mongoURL = "mongodb://localhost/";
+
+    var connection = await mongoose.createConnection(mongoURL);
+
+    const temp = await connection.on("open", function () {
+      new Admin(connection.db).listDatabases(async function (err, result) {
+        var allDatabases = result.databases.map((item, index) => {
+          return item.name;
+        });
+
+        for (let i = 0; i < allDatabases.length; i++) {
+          if (allDatabases[i].split("SmartTailorShopDB").length === 2) {
+            allDBNames.push(allDatabases[i].split("SmartTailorShopDB")[0] + "SmartTailorShopDB");
+          }
+        }
+
+
+        for (let i = 0; i < allDBNames.length; i++) {
+          let url = "mongodb://localhost/" + allDBNames[i];
+          connection.close();
+          const db = await mongoose.connect(url);
+
+          let foundData = await registerSchema.findOne({ shopCode: req.body.shopCode });
+
+          if (foundData !== null) {
+            dataToRes.push(foundData);
+          }
+          db.disconnect();
+        }
+
+
+        
+
+       
+
+        let dbNameCrop = dataToRes[0].dbName.replace("SmartTailorShopDB", "");
+
+        await mongoDBConnect(dbNameCrop)
+
+        
+
         let reqCusId = req.body.cusId;
         let reqCusMobNo = req.body.cusMobNo;
         var reqOrderId = req.body.orderID;
         var customerData = await CustomerSchema.find({ $and: [{ cusMobNo: reqCusMobNo }, { cusId: reqCusId }], });
+
+        console.log(customerData)
+
         if (customerData.length === 0) {
           res.json({ success: false, message: "Customer Data Not Found" });
         } else {
@@ -234,19 +365,22 @@ router.post("/customerLoginData", async (req, res) => {
           res.json({ success: true, message: customerDet });
         }
 
-      } catch (error) {
-        console.log("customerLoginDataCatchError")
-        return res.json({ success: false, message: error });
-      }
 
 
-
-    }
-
+      });
+    });
   } catch (error) {
-    console.log(error + "catchToken")
-    return res.json({ success: false, message: "Catch Error" });
+    console.log(error + "ddd");
+    return res.json({ success: false, message: "Server Down" });
   }
+
+
+
+
+
+
+
+
 
 });
 

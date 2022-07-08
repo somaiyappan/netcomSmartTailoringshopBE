@@ -364,6 +364,8 @@ router.post('/register', async (req, res) => {
                     requestData['maxOrderCount'] = 50
                     requestData['maxEmployeeCount'] = 5
                     requestData['plan'] = "free"
+                    requestData['shopCode'] =  generateUniqueId({ length: 5, useLetters: false })
+
 
 
 

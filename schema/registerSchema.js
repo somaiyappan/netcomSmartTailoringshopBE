@@ -17,7 +17,8 @@ const registerSchema = new mongoose.Schema({
     maxCustomerCount:Number,
     maxOrderCount:Number,
     maxEmployeeCount:Number,
-    plan:String
+    plan:String,
+    shopCode:String
 });
 const registrationDetails = mongoose.model("registrationDetails", registerSchema);
 

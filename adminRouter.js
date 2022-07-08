@@ -1,18 +1,11 @@
 import "dotenv/config";
 import express from "express";
-import generateUniqueId from "generate-unique-id";
-import salwarSchema from "./schema/salwarSchema.js";
-import blouseSchema from "./schema/blouseSchema.js";
-import userCreationalSchema from "./schema/userCreationalSchema.js";
-import emailDetailSchema from "./schema/emailCreationalSchema.js";
-import shirtSchema from "./schema/shirtSchema.js";
-import pantSchema from "./schema/pantSchema.js";
+
 import mongoose from "mongoose";
-import randomColor from "randomcolor";
+
 
 import registerSchema from "./schema/registerSchema.js";
 
-import jwt from "jsonwebtoken";
 
 const TOKEN_KEY = "STONER";
 
@@ -27,8 +20,10 @@ router.get("/", (req, res) => {
 
 router.post("/getAllDataBase", async (req, res) => {
   var requestData = req.body;
-  console.log(requestData)
   let dbName = requestData.username.split("@")[0] + "SmartTailorShopDB";
+  console.log(dbName)
+
+
   try {
     mongoose.disconnect();
 
@@ -52,15 +47,19 @@ router.post("/getAllDataBase", async (req, res) => {
           }
         }
 
+
         for (let i = 0; i < allDBNames.length; i++) {
           let url = "mongodb://localhost/" + allDBNames[i];
           connection.close();
           const db = await mongoose.connect(url);
-          const omit = { emailId: 1, _id: 0, name: 1, planExpiryDate: 1,suspendUser:1 };
+          const omit = { emailId: 1, _id: 0, name: 1, planExpiryDate: 1, suspendUser: 1, plan: 1,shopName:1 };
           let foundData = await registerSchema.findOne({}, omit);
           dataToRes.push(foundData);
           db.disconnect();
         }
+
+        
+        console.log(dataToRes)
 
         var pageNo = req.body.pageNo; // 2
         let size = req.body.pageSize; // 5
@@ -87,15 +86,12 @@ router.post("/getAllDataBase", async (req, res) => {
 
         console.log(`Response Data Count -> ${tempStore.length}`);
 
-       
-
         console.log(requestData);
 
-        return res.json({ success: true, data: tempStore, count: allDBNames.length, });
-      });
+        return res.json({ success: true, data: tempStore, count: allDBNames.length, }); });
     });
   } catch (error) {
-    
+    // console.log(error + "ddd");
     return res.json({ success: false, message: "Server Down" });
   }
 });
@@ -134,7 +130,10 @@ router.post("/updateExpiryDate", async (req, res) => {
       console.log("MongoDB database connection established successfully");
     });
     console.log(requestData);
-    await registerSchema.findOneAndUpdate( { emailId: requestData.username }, { planExpiryDate: requestData.planExpiryDate } );
+    await registerSchema.findOneAndUpdate(
+      { emailId: requestData.username },
+      { planExpiryDate: requestData.planExpiryDate }
+    );
     return res.json({ success: true, message: "Expiry Date Updated" });
   } catch (error) {
     console.log(error)
@@ -143,6 +142,40 @@ router.post("/updateExpiryDate", async (req, res) => {
 });
 
 router.post("/suspendUser", async (req, res) => {
+  try {
+
+
+    mongoose.disconnect();
+    var requestData = req.body;
+    
+    let dbName = requestData.username.split("@")[0];
+    const url = `mongodb://localhost/${dbName}SmartTailorShopDB`;
+ 
+    await mongoose.connect(url);
+
+    const connection = mongoose.connection;
+    connection.once("open", () => {
+      console.log("MongoDB database connection established successfully");
+    });
+
+    console.log(requestData);
+
+    await registerSchema.findOneAndUpdate({ emailId: requestData.username }, {$set:{ suspendUser: requestData.suspendUser }});
+
+    if (requestData.suspendUser) {  // if true as res
+      return res.json({ success: true, message: "User Suspended" });
+    } else {
+      return res.json({ success: true, message: "Suspend Removed" });
+    }
+
+
+  } catch (error) {
+    console.log(error);
+    return res.json({ success: false, message: "Unable to Update." });
+  }
+});
+
+router.post("/updatePlan", async (req, res) => {
   try {
     mongoose.disconnect();
     var requestData = req.body;
@@ -157,22 +190,15 @@ router.post("/suspendUser", async (req, res) => {
       console.log("MongoDB database connection established successfully");
     });
 
-    console.log(requestData);
+    var data = await registerSchema.findOneAndUpdate({ emailId: requestData.username }, { $set: { plan: requestData.plan } })
 
-    await registerSchema.findOneAndUpdate( { emailId: requestData.username }, { suspendUser: requestData.suspendUser } );
+    console.log(data);
 
-    if(requestData.suspendUser){  // if true as res
-      return res.json({ success: true, message: "User Suspended" });
-    }else{
-      return res.json({ success: true, message: "Suspend Removed" });
-    }
+    return res.json({ success: true, message: "Plan has been updated" });
 
-    
   } catch (error) {
     console.log(error);
     return res.json({ success: false, message: "Unable to Update." });
   }
 });
-
 export default router;
-
